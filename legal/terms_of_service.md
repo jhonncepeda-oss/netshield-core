@@ -1,0 +1,3 @@
+# Terms of Service
+
+Welcome to NetShield Core. By using this software, you agree to these terms...
