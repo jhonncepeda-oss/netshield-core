@@ -79,8 +79,7 @@ async def export_pdf(report_id: str):
                 pdf.set_font("Courier", "", 9)
                 pdf.set_fill_color(240, 240, 240)
                 safe_remediation = str(res['remediation']).encode('latin-1', 'replace').decode('latin-1')
-                pdf.multi_cell(0, 5, f"Remediacion:
-{safe_remediation}", fill=True)
+                pdf.multi_cell(0, 5, f"Remediacion:\n{safe_remediation}", fill=True)
                 
             pdf.ln(3)
 
