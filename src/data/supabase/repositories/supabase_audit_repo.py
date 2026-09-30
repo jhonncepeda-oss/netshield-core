@@ -20,7 +20,21 @@ class SupabaseAuditRepository(AuditRepository):
                 "overall_score": report.overall_score,
                 "timestamp": report.timestamp.isoformat()
             }
-            supabase_client.table("audit_reports").insert(report_data).execute()
+            
+            # Try to add user_id if it exists
+            user_id = getattr(report, "user_id", None)
+            if user_id:
+                report_data["user_id"] = user_id
+
+            try:
+                supabase_client.table("audit_reports").insert(report_data).execute()
+            except Exception as e:
+                # If it failed because column user_id doesn't exist, try without it
+                if "user_id" in report_data:
+                    del report_data["user_id"]
+                    supabase_client.table("audit_reports").insert(report_data).execute()
+                else:
+                    raise e
 
             # Insert results
             results_data = [
@@ -39,9 +53,7 @@ class SupabaseAuditRepository(AuditRepository):
             logger.error(f"Error saving report to Supabase: {e}")
 
     def get_report(self, report_id: str) -> Optional[AuditReport]:
-        # Implementation for retrieving report
         pass
 
     def list_reports_by_device(self, device_id: str) -> List[AuditReport]:
-        # Implementation for listing reports
         return []

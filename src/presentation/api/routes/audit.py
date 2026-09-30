@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 import uuid
 import tempfile
 from src.domain.models.audit import Device
@@ -12,9 +12,10 @@ router = APIRouter(prefix="/audit", tags=["Audit"])
 
 @router.post("/run")
 async def run_audit_endpoint(
-    hostname: str, 
-    ip_address: str, 
-    os_version: str, 
+    hostname: str = Form(...), 
+    ip_address: str = Form(...), 
+    os_version: str = Form(...), 
+    user_id: str = Form(...),
     file: UploadFile = File(...)
 ):
     """
@@ -39,6 +40,7 @@ async def run_audit_endpoint(
         service = AuditService(audit_repo, device_repo)
         
         report = service.run_audit(temp_filepath, device)
+        report.user_id = user_id # Dynamically attach it so the repo can save it
         summary = ReportService.generate_summary(report)
         return {"report": summary, "results": report.results}
     except Exception as e:
