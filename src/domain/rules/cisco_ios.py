@@ -17,10 +17,10 @@ class SEC01_PasswordEncryption(BaseRule):
             return AuditResult(self.rule_definition, True, "El cifrado global de contrase?as (Tipo 7) se encuentra activado exitosamente, bloqueando la exposici?n directa de texto plano en el archivo running-config.")
         return AuditResult(
             self.rule_definition, False, "ALERTA DE EXPOSICI?N: La directiva 'service password-encryption' no fue detectada en la configuraci?n. Esto indica que contrase?as locales, cadenas de comunidad SNMP, claves IPsec o llaves BGP pueden estar almacenadas en texto completamente legible. Un atacante que comprometa un acceso de bajo privilegio (Nivel 1) o capture un backup del archivo .cfg podr?a obtener credenciales de administrador de forma trivial.",
-            remediation="configure terminal
+            remediation="""configure terminal
 service password-encryption
 exit
-write memory"
+write memory"""
         )
 
 class SEC02_NoTelnet(BaseRule):
@@ -39,7 +39,7 @@ class SEC02_NoTelnet(BaseRule):
             return AuditResult(self.rule_definition, True, "Se verific? que el protocolo SSH est? forzado en las l?neas VTY, mitigando ataques de intercepci?n de red (Man-in-the-Middle) y sniffing de credenciales.")
         return AuditResult(
             self.rule_definition, False, "VULNERABILIDAD CR?TICA: No se detect? 'transport input ssh' en la configuraci?n de las l?neas VTY. El dispositivo podr?a estar aceptando conexiones Telnet (puerto TCP 23). Motores de b?squeda de IoT como Shodan catalogan rutinariamente routers Cisco con Telnet expuesto, convirti?ndolos en blancos inmediatos para botnets (ej. Mirai) y ataques de fuerza bruta remota.",
-            remediation="configure terminal
+            remediation="""configure terminal
 line vty 0 4
 transport input ssh
 login local
@@ -48,7 +48,7 @@ line vty 5 15
 transport input ssh
 login local
 exit
-write memory"
+write memory"""
         )
 
 class SEC03_ExecTimeout(BaseRule):
@@ -67,14 +67,14 @@ class SEC03_ExecTimeout(BaseRule):
             return AuditResult(self.rule_definition, True, "Las l?neas de gesti?n cuentan con un timeout de inactividad, previniendo el secuestro de sesiones (Session Hijacking).")
         return AuditResult(
             self.rule_definition, False, "RIESGO OPERACIONAL: Las l?neas administrativas (Console/VTY) carecen de un temporizador de cierre 'exec-timeout'. Un usuario que olvide cerrar sesi?n dejar? una puerta trasera abierta indefinidamente con privilegios elevados. Se recomienda forzar un cierre autom?tico tras 5 a 10 minutos de inactividad.",
-            remediation="configure terminal
+            remediation="""configure terminal
 line console 0
 exec-timeout 5 0
 exit
 line vty 0 15
 exec-timeout 5 0
 exit
-write memory"
+write memory"""
         )
 
 class SEC04_NoIPHttpServer(BaseRule):
@@ -93,13 +93,13 @@ class SEC04_NoIPHttpServer(BaseRule):
             return AuditResult(self.rule_definition, True, "El servidor HTTP no cifrado de Cisco ha sido deshabilitado correctamente, cerrando un vector hist?rico de ataques RCE.")
         return AuditResult(
             self.rule_definition, False, "SUPERFICIE DE ATAQUE ACTIVA: No se detect? 'no ip http server'. El dispositivo mantiene habilitado el puerto TCP 80 para la administraci?n WebUI. Adem?s de interceptaci?n de tr?fico (Man-in-the-Middle), los esc?neres de internet identifican la firma de 'Cisco IOS HTTP Server' y lanzan exploits automatizados de forma continua para vulnerar la memoria del router.",
-            remediation="configure terminal
+            remediation="""configure terminal
 no ip http server
 ! Si requieres gesti?n web, habilita ?nicamente la versi?n segura:
 ip http secure-server
 ip http authentication local
 exit
-write memory"
+write memory"""
         )
 
 class SEC05_LoggingEnabled(BaseRule):
@@ -118,13 +118,13 @@ class SEC05_LoggingEnabled(BaseRule):
             return AuditResult(self.rule_definition, True, "El equipo est? configurado para exportar telemetr?a y eventos de seguridad hacia una IP externa (Syslog/SIEM).")
         return AuditResult(
             self.rule_definition, False, "FALLA DE TRAZABILIDAD: No se ha configurado un servidor Syslog ('logging host'). La carencia de telemetr?a remota significa que si el router sufre una brecha de seguridad y el atacante borra los registros locales o reinicia el equipo, ser? virtualmente imposible realizar una investigaci?n forense post-incidente para descubrir c?mo entraron.",
-            remediation="configure terminal
+            remediation="""configure terminal
 ! Reemplaza X.X.X.X con la IP de tu servidor Syslog o SIEM
 logging host X.X.X.X
 logging trap warnings
 logging origin-id hostname
 exit
-write memory"
+write memory"""
         )
 
 def get_all_cisco_rules() -> list[BaseRule]:
