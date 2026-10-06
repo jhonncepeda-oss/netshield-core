@@ -39,8 +39,7 @@ async def run_audit_endpoint(
         device_repo = SupabaseDeviceRepository()
         service = AuditService(audit_repo, device_repo)
         
-        report = service.run_audit(temp_filepath, device)
-        report.user_id = user_id # Dynamically attach it so the repo can save it
+        report = service.run_audit(temp_filepath, device, user_id=user_id)
         summary = ReportService.generate_summary(report)
         return {"report": summary, "results": report.results}
     except Exception as e:

@@ -13,7 +13,7 @@ class AuditService:
         self.device_repo = device_repo
         self.rules = get_all_cisco_rules()
 
-    def run_audit(self, filepath: str, device: Device) -> AuditReport:
+    def run_audit(self, filepath: str, device: Device, user_id: str = None) -> AuditReport:
         # Parse and redact
         config_lines = CiscoParser.parse_from_file(filepath)
         
@@ -30,6 +30,8 @@ class AuditService:
             timestamp=datetime.now(),
             results=results
         )
+        if user_id:
+            report.user_id = user_id
         report.calculate_score()
         
         # Save to database
