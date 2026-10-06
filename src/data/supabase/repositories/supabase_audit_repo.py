@@ -27,14 +27,11 @@ class SupabaseAuditRepository(AuditRepository):
                 report_data["user_id"] = user_id
 
             try:
+                # Let it crash if the user_id is rejected by Supabase!
                 supabase_client.table("audit_reports").insert(report_data).execute()
             except Exception as e:
-                # If it failed because column user_id doesn't exist, try without it
-                if "user_id" in report_data:
-                    del report_data["user_id"]
-                    supabase_client.table("audit_reports").insert(report_data).execute()
-                else:
-                    raise e
+                logger.error(f"First insert failed: {e}")
+                raise e
 
             # Insert results
             results_data = [
