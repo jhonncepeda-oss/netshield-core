@@ -43,3 +43,37 @@ class CiscoParser:
             lines = f.read().splitlines()
         
         return cls.redact_secrets(lines)
+
+    @classmethod
+    def extract_os_version(cls, config_lines: list[str]) -> str | None:
+        """
+        Extracts the Cisco IOS version.
+        """
+        version_pattern = re.compile(r'^version\s+(\d+\.\d+)')
+        for line in config_lines:
+            match = version_pattern.match(line.strip())
+            if match:
+                return match.group(1)
+        return None
+
+    @classmethod
+    def extract_inferred_ports(cls, config_lines: list[str]) -> list[int]:
+        """
+        Infers exposed logic ports based on active services.
+        """
+        ports = set()
+        for line in config_lines:
+            line_str = line.strip().lower()
+            if line_str.startswith("ip http server"):
+                ports.add(80)
+            elif line_str.startswith("ip http secure-server"):
+                ports.add(443)
+            elif "transport input telnet" in line_str or "transport input all" in line_str:
+                ports.add(23)
+            elif "snmp-server community" in line_str:
+                ports.add(161)
+            elif "ip ssh version" in line_str or "transport input ssh" in line_str:
+                ports.add(22)
+            elif "ntp server" in line_str:
+                ports.add(123)
+        return list(ports)

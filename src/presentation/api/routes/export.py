@@ -11,7 +11,8 @@ RULE_TITLES = {
     "SEC-02": "Inhabilitación del Protocolo Telnet (CWE-319)",
     "SEC-03": "Timeout de Sesión Inactiva (CWE-613)",
     "SEC-04": "Servidor HTTP de Gestión (CVE-2018-0171)",
-    "SEC-05": "Centralización de Logs (CWE-778)"
+    "SEC-05": "Centralización de Logs (CWE-778)",
+    "OSINT-01": "Inteligencia de Amenazas y CVEs (Offline)"
 }
 
 def safe_str(text: str) -> str:

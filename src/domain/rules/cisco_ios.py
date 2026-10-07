@@ -167,11 +167,57 @@ class SEC05_LoggingEnabled(BaseRule):
             remediation="Es crítico que despliegue un servidor Syslog en su red interna (por ejemplo, utilizando Linux Rsyslog, Splunk o ELK) y configure el router para enviar la telemetría de forma continua en tiempo real:\n\nconfigure terminal\n! Reemplace X.X.X.X con la dirección IP real de su servidor Syslog\nlogging host X.X.X.X\nlogging trap warnings\nlogging origin-id hostname\nexit\nwrite memory"
         )
 
+class OSINT_ThreatIntelligence(BaseRule):
+    @property
+    def rule_definition(self) -> Rule:
+        return Rule(
+            rule_id="OSINT-01",
+            name="Inteligencia de Amenazas y CVEs (Offline)",
+            description="Mapea los servicios expuestos y la versión de iOS contra la base de datos de vulnerabilidades conocidas (CVE).",
+            severity=Severity.CRITICAL
+        )
+
+    def evaluate(self, config_lines: list[str]) -> AuditResult:
+        from src.data.parsers.cisco_parser import CiscoParser
+        from src.domain.cve_db import CVEDatabase
+
+        os_version = CiscoParser.extract_os_version(config_lines)
+        active_ports = CiscoParser.extract_inferred_ports(config_lines)
+        
+        details = f"Diagnóstico de IA: He ejecutado el motor de OSINT OFFLINE. "
+        if os_version:
+            details += f"He identificado que el sistema opera bajo la versión de Cisco IOS '{os_version}'. "
+        else:
+            details += "No pude determinar la versión exacta de IOS en la configuración. "
+            
+        if active_ports:
+            details += f"Los siguientes puertos lógicos han sido inferidos como expuestos a internet basados en su archivo: {', '.join([f'Port {p}' for p in active_ports])}.\n\n"
+        else:
+            details += "No se detectaron puertos de servicios de red explícitamente expuestos.\n\n"
+            
+        matched_cves = CVEDatabase.get_cves_for_version_and_ports(os_version, active_ports)
+        
+        if not matched_cves:
+            return AuditResult(
+                self.rule_definition, True, 
+                details + "Excelente noticia: Tras cruzar su configuración y superficie de ataque con el catálogo local de Inteligencia de Amenazas, no se identificaron exploits críticos (CVEs) conocidos para sus servicios actuales."
+            )
+            
+        details += "Evaluación de Riesgo: ALERTA CRÍTICA. Al mapear su superficie de ataque contra la base de datos de Inteligencia de Amenazas, he identificado las siguientes vulnerabilidades letales que amenazan este equipo:\n"
+        for cve in matched_cves:
+            details += f" - {cve['cve']} [{cve['severity']}]: {cve['type']}\n"
+            
+        return AuditResult(
+            self.rule_definition, False, details,
+            remediation="Inicie un plan de mitigación inmediato. Debe actualizar el firmware del dispositivo (Cisco IOS) a la última versión segura. Si no puede parchar, deshabilite los servicios vulnerables (Telnet, Smart Install) bloqueando el acceso externo mediante Listas de Control de Acceso (ACLs) aplicadas en el plano de control (CoPP)."
+        )
+
 def get_all_cisco_rules() -> list[BaseRule]:
     return [
         SEC01_PasswordEncryption(),
         SEC02_NoTelnet(),
         SEC03_ExecTimeout(),
         SEC04_NoIPHttpServer(),
-        SEC05_LoggingEnabled()
+        SEC05_LoggingEnabled(),
+        OSINT_ThreatIntelligence()
     ]
