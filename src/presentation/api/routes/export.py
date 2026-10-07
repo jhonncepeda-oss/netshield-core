@@ -22,16 +22,16 @@ def safe_str(text: str) -> str:
 
 class PDFReport(FPDF):
     def header(self):
-        self.set_font('Arial', 'B', 15)
+        self.set_font('helvetica', 'B', 15)
         self.set_text_color(11, 17, 32)
-        self.cell(0, 10, safe_str('NetShield Core - Reporte de Auditoría de Seguridad'), 0, 1, 'C')
+        self.cell(0, 10, safe_str('NetShield Core - Reporte de Auditoría de Seguridad'), new_x="LMARGIN", new_y="NEXT", align='C')
         self.ln(5)
 
     def footer(self):
         self.set_y(-15)
-        self.set_font('Arial', 'I', 8)
+        self.set_font('helvetica', 'I', 8)
         self.set_text_color(128)
-        self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
+        self.cell(0, 10, f'Pagina {self.page_no()}', new_x="LMARGIN", new_y="NEXT", align='C')
 
 @router.get("/{report_id}/pdf")
 async def export_pdf(report_id: str):
@@ -49,28 +49,28 @@ async def export_pdf(report_id: str):
         pdf.add_page()
         
         # Meta info
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 8, safe_str(f"Hostname: {report_data['devices']['hostname']}"), 0, 1)
-        pdf.cell(0, 8, safe_str(f"IP Address: {report_data['devices']['ip_address']}"), 0, 1)
-        pdf.cell(0, 8, safe_str(f"OS Version: {report_data['devices']['os_version']}"), 0, 1)
+        pdf.set_font("helvetica", "B", 12)
+        pdf.cell(0, 8, safe_str(f"Hostname: {report_data['devices']['hostname']}"), new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 8, safe_str(f"IP Address: {report_data['devices']['ip_address']}"), new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 8, safe_str(f"OS Version: {report_data['devices']['os_version']}"), new_x="LMARGIN", new_y="NEXT")
         
         score = report_data['overall_score']
-        pdf.set_font("Arial", "B", 14)
+        pdf.set_font("helvetica", "B", 14)
         if score >= 80:
             pdf.set_text_color(16, 185, 129) # Emerald
         else:
             pdf.set_text_color(244, 63, 94) # Rose
             
-        pdf.cell(0, 10, safe_str(f"Score de Seguridad: {score:.2f}%"), 0, 1)
+        pdf.cell(0, 10, safe_str(f"Score de Seguridad: {score:.2f}%"), new_x="LMARGIN", new_y="NEXT")
         pdf.set_text_color(0, 0, 0)
         pdf.ln(5)
         
         # Rules
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, safe_str("Detalles de Auditoría"), 0, 1)
+        pdf.set_font("helvetica", "B", 12)
+        pdf.cell(0, 10, safe_str("Detalles de Auditoría"), new_x="LMARGIN", new_y="NEXT")
         
         for res in results_data:
-            pdf.set_font("Arial", "B", 10)
+            pdf.set_font("helvetica", "B", 10)
             status_text = "[SEGURO]" if res.get('passed') == True else f"[VULNERABLE - ALTA]"
             
             if res.get('passed') == True:
@@ -79,10 +79,10 @@ async def export_pdf(report_id: str):
                 pdf.set_text_color(244, 63, 94)
             
             rule_title_raw = RULE_TITLES.get(res.get('rule_id'), 'Regla de Seguridad ' + str(res.get('rule_id')))
-            pdf.cell(0, 8, safe_str(f"{status_text} {rule_title_raw}"), 0, 1)
+            pdf.cell(0, 8, safe_str(f"{status_text} {rule_title_raw}"), new_x="LMARGIN", new_y="NEXT")
             
             pdf.set_text_color(0, 0, 0)
-            pdf.set_font("Arial", "", 9)
+            pdf.set_font("helvetica", "", 9)
             pdf.multi_cell(0, 5, safe_str(res.get('details')))
             
             if res.get('passed') == False and res.get('remediation'):
@@ -102,5 +102,7 @@ async def export_pdf(report_id: str):
             }
         )
     except Exception as e:
-        print(f"Error PDF: {e}")
-        raise HTTPException(status_code=500, detail="Error generando PDF")
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error PDF: {error_details}")
+        raise HTTPException(status_code=500, detail=str(e))
