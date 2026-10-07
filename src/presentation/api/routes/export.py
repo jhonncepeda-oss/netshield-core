@@ -83,12 +83,12 @@ async def export_pdf(report_id: str):
             
             pdf.set_text_color(0, 0, 0)
             pdf.set_font("helvetica", "", 9)
-            pdf.multi_cell(0, 5, safe_str(res.get('details')))
+            pdf.multi_cell(0, 5, safe_str(res.get('details')), new_x="LMARGIN", new_y="NEXT")
             
             if res.get('passed') == False and res.get('remediation'):
                 pdf.set_font("Courier", "", 9)
                 pdf.set_fill_color(240, 240, 240)
-                pdf.multi_cell(0, 5, safe_str(f"Remediación:\n{res.get('remediation')}"), fill=True)
+                pdf.multi_cell(0, 5, safe_str(f"Remediación:\n{res.get('remediation')}"), fill=True, new_x="LMARGIN", new_y="NEXT")
                 
             pdf.ln(3)
 
